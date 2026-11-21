@@ -1,0 +1,2446 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>小膳 · 每日健康菜谱</title>
+<meta name="description" content="AI 营养师兼厨师，帮你搭配每天的均衡菜单，支持搜索和对话选菜。" />
+<style>
+:root {
+  --bg: #fbf7f1;
+  --bg-soft: #f4ede2;
+  --card: #ffffff;
+  --ink: #22262b;
+  --ink-soft: #4a5158;
+  --muted: #7b828a;
+  --line: #e9e1d5;
+  --accent: #2f7d4f;
+  --accent-ink: #ffffff;
+  --accent-soft: #e8f3ec;
+  --warm: #d9762f;
+  --warm-soft: #fbeee3;
+  --danger: #c2453d;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 1px 2px rgba(30, 25, 15, .04), 0 8px 24px rgba(30, 25, 15, .06);
+  --shadow-lg: 0 12px 40px rgba(30, 25, 15, .14);
+  --font: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: radial-gradient(1200px 500px at 50% -220px, #fff8ec 0%, var(--bg) 60%) no-repeat, var(--bg);
+  color: var(--ink);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, p, ul, li { margin: 0; }
+ul { padding: 0; list-style: none; }
+button { font-family: inherit; }
+a { color: var(--accent); }
+
+/* ---------- 顶栏 ---------- */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 28px;
+  background: rgba(251, 247, 241, .86);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: var(--accent-ink);
+  background: linear-gradient(140deg, #3a9463, #276b43);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25);
+  flex: none;
+}
+
+.brand-text h1 { font-size: 19px; letter-spacing: .5px; font-weight: 700; }
+.brand-text p { font-size: 12px; color: var(--muted); letter-spacing: .3px; }
+
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink-soft);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+}
+.pill:hover { border-color: #d6cbb8; box-shadow: var(--shadow); }
+
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #c3bdb1; flex: none; }
+.pill[data-state="ok"] .dot { background: #2fa45f; box-shadow: 0 0 0 3px rgba(47, 164, 95, .16); }
+.pill[data-state="bad"] .dot { background: var(--danger); box-shadow: 0 0 0 3px rgba(194, 69, 61, .16); }
+.pill[data-state="busy"] .dot { background: var(--warm); animation: pulse 1.1s infinite; }
+
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+/* ---------- 按钮 ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .12s, box-shadow .15s, background .15s, border-color .15s;
+  white-space: nowrap;
+}
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+
+.btn.primary { background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 16px rgba(47, 125, 79, .22); }
+.btn.primary:hover:not(:disabled) { background: #276941; }
+
+.btn.ghost { background: var(--card); color: var(--ink-soft); border-color: var(--line); }
+.btn.ghost:hover:not(:disabled) { border-color: #d3c7b4; }
+
+.btn.small { padding: 7px 12px; font-size: 13px; }
+
+.link-btn {
+  background: none;
+  border: 0;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 6px;
+}
+.link-btn:hover { color: var(--ink); }
+.link-btn.danger { color: var(--danger); }
+
+.icon-btn {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  line-height: 1;
+}
+.icon-btn:hover { background: var(--bg-soft); color: var(--ink); }
+
+/* ---------- 布局 ---------- */
+
+.layout {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 26px 28px 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 26px;
+  align-items: start;
+}
+
+.main-col { min-width: 0; }
+
+/* ---------- 搜索 ---------- */
+
+.searchbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 8px 8px 18px;
+  box-shadow: var(--shadow);
+}
+.searchbar:focus-within { border-color: #cbdccf; box-shadow: 0 0 0 4px rgba(47, 125, 79, .08), var(--shadow); }
+
+.search-icon { color: var(--muted); flex: none; }
+
+.searchbar input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  font-size: 15px;
+  color: var(--ink);
+  padding: 8px 0;
+}
+.searchbar input::placeholder { color: #a8a092; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 20px; }
+
+.chip {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink-soft);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.chip:hover { border-color: #cbbfa9; color: var(--ink); }
+.chip-accent { border-color: #efd3b8; background: var(--warm-soft); color: var(--warm); font-weight: 600; }
+.chip-accent:hover { background: #f8e4d2; }
+
+/* ---------- 菜谱区 ---------- */
+
+.board { display: flex; flex-direction: column; gap: 18px; min-height: 220px; scroll-margin-top: 84px; }
+
+.board-empty {
+  border: 1px dashed #ddd2c1;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, .55);
+  padding: 44px 28px;
+  text-align: center;
+  color: var(--muted);
+}
+.board-empty .empty-emoji { font-size: 44px; line-height: 1; }
+.board-empty h2 { font-size: 19px; color: var(--ink); margin: 12px 0 6px; }
+.board-empty p { font-size: 14px; max-width: 420px; margin: 0 auto; }
+.empty-actions { display: flex; justify-content: center; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+
+.menu-hero {
+  background: linear-gradient(135deg, #f5fbf6, #fff8ef);
+  border: 1px solid #e2ecdf;
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  box-shadow: var(--shadow);
+}
+.menu-hero h2 { font-size: 20px; }
+.menu-hero p { color: var(--ink-soft); font-size: 14px; margin-top: 4px; }
+.menu-hero .meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+.tag.warm { background: var(--warm-soft); color: var(--warm); }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: box-shadow .18s, transform .18s, border-color .18s;
+}
+.card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); border-color: #e0d6c6; }
+
+.card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+
+.card h3 { font-size: 17px; line-height: 1.4; }
+
+.slot-badge {
+  flex: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--warm);
+  background: var(--warm-soft);
+  border-radius: 8px;
+  padding: 3px 9px;
+}
+
+.card-stats { display: flex; flex-wrap: wrap; gap: 6px; }
+.stat {
+  font-size: 12px;
+  color: var(--ink-soft);
+  background: var(--bg-soft);
+  border-radius: 8px;
+  padding: 4px 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.card-why { font-size: 13px; color: var(--ink-soft); }
+
+.card-tip {
+  font-size: 13px;
+  color: #8a4a1c;
+  background: #fdf3e6;
+  border: 1px dashed #efd2b0;
+  border-radius: 10px;
+  padding: 8px 11px;
+  line-height: 1.55;
+}
+
+.slot-badge.cuisine {
+  color: #8a4a1c;
+  background: #fbeada;
+}
+
+.card-section { border-top: 1px dashed var(--line); padding-top: 10px; }
+.card-section h4 { font-size: 12px; color: var(--muted); letter-spacing: .5px; margin-bottom: 6px; font-weight: 700; }
+.card-section li { font-size: 13px; color: var(--ink-soft); margin-bottom: 3px; }
+.card-section ul li { padding-left: 14px; position: relative; }
+.card-section ul li::before { content: ""; position: absolute; left: 2px; top: .62em; width: 4px; height: 4px; border-radius: 50%; background: #cdbfa8; }
+.card-section ol { margin: 0; padding-left: 20px; }
+.card-section ol li { padding-left: 0; }
+.card-section ol li::marker { color: #b6a68c; font-weight: 600; font-size: 12px; }
+
+.card-actions { display: flex; gap: 8px; margin-top: auto; }
+
+/* ---------- 侧栏 ---------- */
+
+.side { display: flex; flex-direction: column; gap: 18px; position: sticky; top: 88px; }
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.panel-head h2 { font-size: 15px; }
+
+.count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.menu-list { display: flex; flex-direction: column; gap: 8px; }
+
+.menu-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  font-size: 13px;
+}
+.menu-item .mi-name { color: var(--ink); font-weight: 600; }
+.menu-item .mi-sub { color: var(--muted); font-size: 12px; }
+.menu-item button { border: 0; background: none; color: var(--muted); cursor: pointer; padding: 0 2px; font-size: 14px; }
+.menu-item button:hover { color: var(--danger); }
+
+.menu-empty { font-size: 13px; color: var(--muted); }
+
+.totals {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.totals strong { color: var(--ink); font-size: 16px; font-variant-numeric: tabular-nums; }
+
+.panel-tips .tips li { font-size: 13px; color: var(--ink-soft); padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.panel-tips .tips li:last-child { border-bottom: 0; }
+.panel-tips strong { color: var(--ink); }
+
+/* ---------- 对话 ---------- */
+
+.chat {
+  max-width: 1180px;
+  margin: 10px auto 0;
+  padding: 0 28px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chat-head h2 { font-size: 15px; }
+.chat-head p { font-size: 12px; color: var(--muted); }
+
+.chat-log {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  min-height: 96px;
+  max-height: 340px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow);
+}
+
+.msg { display: flex; gap: 10px; max-width: 86%; }
+.msg .avatar { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; flex: none; }
+.msg .bubble { padding: 10px 14px; border-radius: 14px; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+.msg.user { align-self: flex-end; flex-direction: row-reverse; }
+.msg.user .avatar { background: var(--warm-soft); }
+.msg.user .bubble { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+.msg.chef .avatar { background: var(--accent-soft); }
+.msg.chef .bubble { background: var(--bg-soft); border-bottom-left-radius: 4px; }
+.msg .bubble.thinking { color: var(--muted); font-style: italic; }
+
+.chat-cards { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.chat-cards .mini-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  background: var(--card);
+  min-width: 140px;
+}
+.chat-cards .mini-card b { display: block; font-size: 13px; }
+
+.chat-form { display: flex; gap: 10px; }
+.chat-form input {
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  padding: 12px 18px;
+  font-size: 14px;
+  outline: 0;
+  box-shadow: var(--shadow);
+  color: var(--ink);
+}
+.chat-form input:focus { border-color: #cbdccf; box-shadow: 0 0 0 4px rgba(47, 125, 79, .08); }
+
+/* ---------- 页脚 ---------- */
+
+.foot {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 18px 28px 40px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.foot-warn { color: #a08b6e; }
+
+/* ---------- 弹窗 ---------- */
+
+.dialog {
+  border: 0;
+  padding: 0;
+  border-radius: 20px;
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: var(--shadow-lg);
+  width: min(560px, calc(100vw - 32px));
+}
+.dialog::backdrop { background: rgba(34, 30, 24, .38); backdrop-filter: blur(2px); }
+
+.dialog-inner { padding: 22px 24px; display: flex; flex-direction: column; gap: 16px; }
+.dialog-head { display: flex; align-items: center; justify-content: space-between; }
+.dialog-head h2 { font-size: 18px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field .label { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+
+.field input[type="text"],
+.field input[type="password"],
+.field select {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  background: #fffdf9;
+  color: var(--ink);
+  outline: 0;
+  width: 100%;
+}
+.field input:focus, .field select:focus { border-color: #cbdccf; box-shadow: 0 0 0 3px rgba(47, 125, 79, .08); }
+
+.key-row { display: flex; gap: 8px; }
+.key-row input { flex: 1; }
+
+.hint { font-size: 12px; color: var(--muted); }
+
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.test-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.test-result { font-size: 13px; color: var(--muted); }
+.test-result.ok { color: var(--accent); }
+.test-result.bad { color: var(--danger); }
+
+.dialog-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 6px; border-top: 1px solid var(--line); }
+
+/* ---------- 提示条 ---------- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translate(-50%, 12px);
+  background: #22262b;
+  color: #fff;
+  font-size: 13px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s, transform .2s;
+  max-width: min(560px, calc(100vw - 40px));
+  text-align: center;
+  z-index: 60;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- 骨架屏 ---------- */
+
+.skeleton {
+  background: linear-gradient(90deg, #f1ebe1 25%, #f8f4ec 37%, #f1ebe1 63%);
+  background-size: 400% 100%;
+  animation: shine 1.3s ease infinite;
+  border-radius: var(--radius);
+  height: 180px;
+}
+@keyframes shine { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+/* ---------- 模式切换 ---------- */
+
+[hidden] { display: none !important; }
+
+.mode-switch {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  flex: none;
+}
+
+.mode-btn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 15px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background .18s, color .18s, box-shadow .18s;
+  white-space: nowrap;
+}
+
+.mode-btn:hover { color: var(--ink); }
+
+.mode-btn.is-active {
+  background: var(--card);
+  color: var(--accent);
+  box-shadow: 0 1px 3px rgba(30, 25, 15, .1);
+}
+
+body[data-mode="home"] .mode-btn.is-active { color: #b5561f; }
+
+body[data-mode="home"] .board-empty .empty-emoji { filter: saturate(1.1); }
+
+body[data-mode="home"] .card-top h3 { letter-spacing: .2px; }
+
+.mode-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- 响应式 ---------- */
+
+@media (max-width: 960px) {
+  .layout { grid-template-columns: 1fr; padding: 20px 18px 4px; }
+  .side { position: static; }
+  .topbar { padding: 12px 18px; }
+  .chat { padding: 0 18px; }
+  .foot { padding: 16px 18px 32px; }
+  .field-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 720px) {
+  .topbar { flex-wrap: wrap; row-gap: 10px; }
+  .mode-switch { order: 3; width: 100%; justify-content: center; }
+  .mode-btn { flex: 1; text-align: center; }
+}
+
+@media (max-width: 560px) {
+  .brand-text p { display: none; }
+  .searchbar { flex-wrap: wrap; border-radius: 20px; padding: 10px; }
+  .searchbar .btn { width: 100%; }
+  .search-icon { display: none; }
+  .msg { max-width: 94%; }
+}
+
+</style>
+
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 48 48" width="30" height="30" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 30h28a14 14 0 0 1-28 0Z" />
+        <path d="M24 30V16M24 16c0-4 3-7 7-7 0 4-3 7-7 7ZM24 16c0-4-3-7-7-7 0 4 3 7 7 7Z" />
+      </svg>
+    </div>
+    <div class="brand-text">
+      <h1>小膳</h1>
+      <p id="brandSub">每日健康菜谱 · 营养师 × 厨师</p>
+    </div>
+  </div>
+
+  <div class="mode-switch" id="modeSwitch" role="group" aria-label="切换模式">
+    <button type="button" class="mode-btn is-active" data-mode="health">健康模式</button>
+    <button type="button" class="mode-btn" data-mode="home">家常模式</button>
+  </div>
+
+  <div class="topbar-actions">
+    <button class="pill" id="connPill" type="button" title="点击打开 API 设置">
+      <span class="dot" id="connDot"></span>
+      <span id="connText">未连接</span>
+    </button>
+    <button class="btn ghost" id="btnOpenSettings" type="button">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+      API 设置
+    </button>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="main-col" aria-label="菜谱">
+
+    <form class="searchbar" id="searchForm" autocomplete="off">
+      <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="searchInput" type="search" placeholder="想吃什么？例如：高蛋白低脂的鸡胸肉、15 分钟快手菜、控糖晚餐" />
+      <button class="btn primary" type="submit" id="btnSearch">搜索菜谱</button>
+    </form>
+
+    <div class="chips" id="chipsHealth" role="group" aria-label="快捷筛选">
+      <button type="button" class="chip" data-q="低卡减脂，每顿 500 大卡以内">低卡减脂</button>
+      <button type="button" class="chip" data-q="高蛋白">高蛋白</button>
+      <button type="button" class="chip" data-q="纯素、蛋奶素都能吃的素菜">素食</button>
+      <button type="button" class="chip" data-q="20 分钟内能做完的快手菜">快手</button>
+      <button type="button" class="chip" data-q="控糖、低 GI 的主食和菜">控糖</button>
+      <button type="button" class="chip" data-q="适合带饭、微波加热也好吃的便当菜">带饭</button>
+      <button type="button" class="chip chip-accent" id="btnMenu" data-action="menu">✨ 生成今日菜单</button>
+    </div>
+
+    <div class="chips" id="chipsHome" role="group" aria-label="按菜系浏览" hidden>
+      <button type="button" class="chip" data-cuisine="川菜">川菜</button>
+      <button type="button" class="chip" data-cuisine="粤菜">粤菜</button>
+      <button type="button" class="chip" data-cuisine="鲁菜">鲁菜</button>
+      <button type="button" class="chip" data-cuisine="苏菜">苏菜</button>
+      <button type="button" class="chip" data-cuisine="湘菜">湘菜</button>
+      <button type="button" class="chip" data-cuisine="浙菜">浙菜</button>
+      <button type="button" class="chip" data-cuisine="闽菜">闽菜</button>
+      <button type="button" class="chip" data-cuisine="徽菜">徽菜</button>
+      <button type="button" class="chip" data-cuisine="东北菜">东北菜</button>
+      <button type="button" class="chip" data-cuisine="西北菜">西北菜</button>
+      <button type="button" class="chip" data-cuisine="云贵菜">云贵菜</button>
+      <button type="button" class="chip" data-cuisine="港式家常">港式</button>
+      <button type="button" class="chip chip-accent" id="btnDish" data-action="dish">🎲 随便来一道</button>
+    </div>
+
+    <div class="board" id="board" aria-live="polite">
+      <div class="board-empty" id="emptyHealth">
+        <div class="empty-emoji" aria-hidden="true">🥗</div>
+        <h2>今天吃点什么？</h2>
+        <p>让「小膳」帮你配一份今日菜单，或者直接搜索你手边的食材。</p>
+        <div class="empty-actions">
+          <button class="btn primary" type="button" data-action="menu">生成今日菜单</button>
+          <button class="btn ghost" type="button" data-q="冰箱里有鸡蛋、西红柿、西兰花、鸡胸肉">我有这些食材</button>
+        </div>
+      </div>
+
+      <div class="board-empty" id="emptyHome" hidden>
+        <div class="empty-emoji" aria-hidden="true">🍳</div>
+        <h2>今天想做道什么菜？</h2>
+        <p>让「老灶」按菜系教你一道地道家常菜：火候、下锅顺序、最容易翻车的那一步，都写清楚。</p>
+        <div class="empty-actions">
+          <button class="btn primary" type="button" data-action="dish">随便来一道</button>
+          <button class="btn ghost" type="button" data-cuisine="川菜">先看看川菜</button>
+        </div>
+      </div>
+
+      <div id="cardsHost"></div>
+    </div>
+  </section>
+
+  <aside class="side" aria-label="侧栏">
+    <div id="sideHealth">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>今日已选 <span class="count" id="menuCount">0</span></h2>
+          <button class="link-btn" id="btnClearMenu" type="button">清空</button>
+        </div>
+        <ul class="menu-list" id="menuList"></ul>
+        <p class="menu-empty" id="menuEmpty">点菜谱卡片上的「加入今日菜单」，这里会帮你算总热量和蛋白质。</p>
+        <div class="totals" id="menuTotals" hidden></div>
+      </div>
+
+      <div class="panel panel-tips">
+        <div class="panel-head"><h2>小膳的搭配口诀</h2></div>
+        <ul class="tips">
+          <li><strong>一拳头主食</strong>：优先杂粮饭、玉米、红薯。</li>
+          <li><strong>一掌心蛋白</strong>：鱼虾、鸡胸、蛋、豆腐轮着来。</li>
+          <li><strong>两拳头蔬菜</strong>：深色菜占一半。</li>
+          <li><strong>少油三件套</strong>：蒸、煮、快炒，出锅再放盐。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="sideHome" hidden>
+      <div class="panel">
+        <div class="panel-head">
+          <h2>我的菜谱本 <span class="count" id="bookCount">0</span></h2>
+          <button class="link-btn" id="btnClearBook" type="button">清空</button>
+        </div>
+        <ul class="menu-list" id="bookList"></ul>
+        <p class="menu-empty" id="bookEmpty">看到想学的菜，点「收进菜谱本」，这里会按菜系归好，方便下次照着做。</p>
+        <div class="totals" id="bookSummary" hidden></div>
+      </div>
+
+      <div class="panel panel-tips">
+        <div class="panel-head"><h2>老灶的基本功</h2></div>
+        <ul class="tips">
+          <li><strong>热锅凉油</strong>：锅烧到冒青烟再下油，炒肉不粘。</li>
+          <li><strong>焯水去腥</strong>：冷水下锅，血沫才逼得出来。</li>
+          <li><strong>糖色别贪</strong>：冰糖化开变枣红就下料，一秒就苦。</li>
+          <li><strong>勾芡分两次</strong>：汤汁挂勺即停，回锅会糊。</li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<section class="chat" aria-label="和小膳对话">
+  <div class="chat-head">
+    <h2>和小膳聊聊</h2>
+    <p id="chatHint">比如「午餐想吃鱼」「换一道更简单的早餐」「帮我改造成带饭版」</p>
+  </div>
+  <div class="chat-log" id="chatLog" aria-live="polite"></div>
+  <form class="chat-form" id="chatForm" autocomplete="off">
+    <input id="chatInput" type="text" placeholder="说说你的口味、预算、手边食材……" />
+    <button class="btn primary" type="submit" id="btnChatSend">发送</button>
+  </form>
+</section>
+
+<footer class="foot">
+  <span>由 Agnes 2.5 驱动 · Key 仅保存在本机浏览器，直接请求 api.agnes-ai.cn</span>
+  <span class="foot-warn">营养建议仅供参考，不能替代医生或注册营养师的个体化诊疗。</span>
+</footer>
+
+<dialog id="settingsDialog" class="dialog">
+  <form method="dialog" class="dialog-inner" id="settingsForm">
+    <div class="dialog-head">
+      <h2>API 设置</h2>
+      <button class="icon-btn" value="cancel" type="submit" aria-label="关闭">×</button>
+    </div>
+
+    <label class="field">
+      <span class="label">Agnes API Key</span>
+      <div class="key-row">
+        <input id="keyInput" type="password" placeholder="sk-..." spellcheck="false" autocomplete="off" />
+        <button type="button" class="btn ghost small" id="keyToggle">显示</button>
+      </div>
+      <small class="hint">在 <a href="https://platform.agnes-ai.cn" target="_blank" rel="noreferrer">platform.agnes-ai.cn</a> 生成。只存在你自己的浏览器里；健康模式和家常模式共用这一个 Key。</small>
+    </label>
+
+    <label class="field">
+      <span class="label">模型</span>
+      <select id="modelSelect">
+        <option value="agnes-2.5-flash">Agnes 2.5 Flash · 快而免费</option>
+        <option value="agnes-3.0-flash">Agnes 3.0 Flash · 新一代免费</option>
+        <option value="agnes-2.5-pro">Agnes 2.5 Pro · 按量计费</option>
+      </select>
+    </label>
+
+    <div class="field-row" id="healthOnlyFields">
+      <label class="field">
+        <span class="label">每日目标</span>
+        <select id="goalSelect">
+          <option value="均衡维持，每天 1800 大卡左右">均衡维持（1800 kcal）</option>
+          <option value="减脂，每天 1500–1600 大卡，晚餐清淡">减脂（1500 kcal）</option>
+          <option value="增肌，每天 2200 大卡，蛋白质充足">增肌（2200 kcal）</option>
+          <option value="控糖，低 GI、少精制碳水">控糖（低 GI）</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="label">忌口 / 不吃</span>
+        <input id="avoidInput" type="text" placeholder="例：香菜、乳糖不耐" />
+      </label>
+    </div>
+
+    <div class="test-row">
+      <button type="button" class="btn ghost" id="btnTest">测试连通</button>
+      <span class="test-result" id="testResult" role="status">还没测试</span>
+    </div>
+
+    <div class="dialog-foot">
+      <button type="button" class="link-btn danger" id="btnClearKey">清除本机 Key</button>
+      <button type="submit" class="btn primary" id="btnSaveSettings" value="save">保存</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/*!
+ * 小膳 · 核心逻辑
+ * 纯函数，无 DOM 依赖：浏览器里挂到 window.ChefCore，Node 里可 require 做单元测试。
+ */
+(function (root, factory) {
+  var api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  if (root) root.ChefCore = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+
+  /* ---------- 常量 ---------- */
+
+  var BASE_URL = 'https://api.agnes-ai.cn/v1';
+  var DEFAULT_MODEL = 'agnes-2.5-flash';
+  var CHAT_TIMEOUT_MS = 120000;
+  var TEST_TIMEOUT_MS = 30000;
+  var NON_CHAT_MODEL = /(image|video|embedding|rerank|tts|whisper|moderation)/i;
+
+  var PERSONA_HEALTH = [
+    '你是「小膳」，一位注册营养师，也是一名擅长家常菜的中餐厨师。',
+    '你的任务：帮用户搭配每天吃得下、做得出来、营养均衡的菜谱。',
+    '',
+    '规则：',
+    '1. 落地：只用中国菜市场或超市常见的食材，单道菜 30 分钟内能做完，写清大致份量。',
+    '2. 均衡：每天总热量 1600–2000 kcal（用户有目标时以用户为准），三餐加一次加餐；每餐都要有优质蛋白，每天蔬菜不少于 300 g，主食粗细搭配。',
+    '3. 少油少盐少糖：优先蒸、煮、炖、烤、快炒、凉拌，避免油炸和深加工食品。',
+    '4. 说人话：先给结论，再给一句理由；不要用“综上所述”“总而言之”这类套话。',
+    '5. 边界：不承诺疗效、不做疾病诊断；遇到孕期、哺乳期、儿童、糖尿病、肾病等特殊情况，提醒对方咨询医生或注册营养师。',
+    '6. 始终使用简体中文，语气像一个靠谱又随和的厨师朋友。'
+  ].join('\n');
+
+  var PERSONA_HOME = [
+    '你是「老灶」，一位走南闯北的家常菜师傅：川、鲁、粤、苏、浙、湘、闽、徽八大菜系，加上东北、西北、云贵、京津和港式家常，都亲手做过。',
+    '你的任务：教用户做出地道、好吃、家里灶台能复现的家常菜。',
+    '',
+    '规则：',
+    '1. 地道优先：按菜系本来的做法来。该用郫县豆瓣就用，该吊汤就吊汤，该油炸就油炸；不要为了“健康”擅自改配方，也不要写成餐厅摆盘菜。',
+    '2. 家用可复现：普通炒锅、家用燃气灶、超市能买到的调料；除炖菜外 40 分钟内完成，写清火候（大火/中火/小火）、油温、下锅顺序和调味比例。',
+    '3. 每道菜给一条“关键一步”：新手最容易翻车的那一下，比如“豆瓣酱一定要小火炒出红油再下料”。',
+    '4. 讲人话：先给做法，再点一句原理；不堆砌“鲜香扑鼻”“唇齿留香”这类空话。',
+    '5. 语言：简体中文。'
+  ].join('\n');
+
+  var PERSONA = PERSONA_HEALTH;
+
+  function personaFor(mode) {
+    return mode === 'home' ? PERSONA_HOME : PERSONA_HEALTH;
+  }
+
+  var JSON_ONLY = '只输出 JSON，不要 markdown 代码块，不要任何解释或前后缀。';
+
+  var RECIPE_FIELDS = '"name"（菜名）、"kcal"（热量，数字）、"protein"（蛋白质克数，数字）、"time"（预计耗时，如"15分钟"）、"tags"（标签数组，如"高蛋白""快手""低卡"）、"ingredients"（食材数组，每项带份量）、"steps"（做法步骤数组）、"why"（一句话营养理由）';
+
+  var RECIPE_FIELDS_HOME = '"name"（菜名）、"cuisine"（菜系，如"川菜""粤菜""东北菜"）、"flavor"（口味，如"咸鲜微辣"）、"difficulty"（难度：简单/中等/有点难）、"time"（预计耗时，如"25分钟"）、"ingredients"（食材数组，每项带份量）、"steps"（做法步骤数组，写清火候与顺序）、"tip"（关键一步）';
+
+  /* ---------- 提示词 ---------- */
+
+  function dateLabel(d) {
+    var date = d instanceof Date ? d : new Date();
+    var week = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][date.getDay()];
+    return (date.getMonth() + 1) + '月' + date.getDate() + '日 ' + week;
+  }
+
+  function menuUserPrompt(opts) {
+    opts = opts || {};
+    var lines = [];
+    lines.push('帮我搭配今天的健康菜单。');
+    lines.push('- 日期：' + (opts.date || dateLabel()));
+    lines.push('- 目标：' + (opts.goal || '日常均衡、吃饱不胖'));
+    if (opts.avoid) lines.push('- 忌口/不吃：' + opts.avoid);
+    lines.push('');
+    lines.push(JSON_ONLY);
+    lines.push('JSON 结构：');
+    lines.push('{');
+    lines.push('  "title": "菜单标题",');
+    lines.push('  "summary": "一句话总结今天的搭配思路",');
+    lines.push('  "totalKcal": 1800,');
+    lines.push('  "meals": [');
+    lines.push('    { "slot": "早餐", "name": "", "kcal": 0, "protein": 0, "time": "", "ingredients": [], "steps": [], "why": "" }');
+    lines.push('  ],');
+    lines.push('  "tips": ["一条可执行的小建议"]');
+    lines.push('}');
+    lines.push('要求：meals 必须有 4 条，slot 依次为“早餐”“午餐”“加餐”“晚餐”；每道菜的 ingredients 4–8 项且带份量，steps 3–5 步，why 一句话；totalKcal 等于四餐热量之和。');
+    return lines.join('\n');
+  }
+
+  function searchUserPrompt(opts) {
+    opts = opts || {};
+    var q = (opts.query || '').trim();
+    var filters = Array.isArray(opts.filters) ? opts.filters.filter(Boolean) : [];
+    var lines = [];
+    if (q) lines.push('在菜谱库里搜索：' + q);
+    else lines.push('在菜谱库里给我一些推荐。');
+    if (filters.length) lines.push('筛选条件：' + filters.join('、'));
+    lines.push('');
+    lines.push(JSON_ONLY);
+    lines.push('JSON 结构：{"recipes":[{ ' + RECIPE_FIELDS + ' }],"note":"一句话推荐语"}');
+    lines.push('要求：返回 4–6 道最符合的菜；如果条件太苛刻没有完全匹配的，返回最接近的，并在 note 里说明取舍。');
+    return lines.join('\n');
+  }
+
+  function searchUserPrompt(opts) {
+    opts = opts || {};
+    var q = (opts.query || '').trim();
+    var filters = Array.isArray(opts.filters) ? opts.filters.filter(Boolean) : [];
+    var lines = [];
+    if (q) lines.push('在菜谱库里搜索：' + q);
+    else lines.push('在菜谱库里给我一些推荐。');
+    if (filters.length) lines.push('筛选条件：' + filters.join('、'));
+    lines.push('');
+    lines.push(JSON_ONLY);
+    lines.push('JSON 结构：{"recipes":[{ ' + RECIPE_FIELDS + ' }],"note":"一句话推荐语"}');
+    lines.push('要求：返回 4–6 道最符合的菜；如果条件太苛刻没有完全匹配的，返回最接近的，并在 note 里说明取舍。');
+    return lines.join('\n');
+  }
+
+  function homeSearchPrompt(opts) {
+    opts = opts || {};
+    var q = (opts.query || '').trim();
+    var cuisine = (opts.cuisine || '').trim();
+    var difficulty = (opts.difficulty || '').trim();
+    var lines = [];
+    lines.push(q ? '我想学做：' + q : '随便给我推荐几道家常菜。');
+    lines.push('- 菜系偏好：' + (cuisine || '不限（尽量覆盖不同菜系）'));
+    if (difficulty) lines.push('- 难度：' + difficulty);
+    lines.push('');
+    lines.push(JSON_ONLY);
+    lines.push('JSON 结构：{"recipes":[{ ' + RECIPE_FIELDS_HOME + ' }],"note":"一句话点评"}');
+    lines.push('要求：返回 4–6 道地道家常菜；每道都要写清菜系、口味、难度；ingredients 带份量；steps 4–6 步，写明火候（大火/中火/小火）、油温和下锅顺序；tip 必须是"最容易翻车的那一步"，不要泛泛而谈。');
+    lines.push('如果用户指定了菜系，就全部给该菜系；没指定时尽量分布在 3 个以上菜系。');
+    return lines.join('\n');
+  }
+
+  function chatSystemPrompt(mode) {
+    if (mode === 'home') {
+      return [
+        PERSONA_HOME,
+        '',
+        '对话要求：',
+        '1. 回答控制在 200 字以内，信息密度高，不寒暄。',
+        '2. 只要聊到具体做法（推荐、替换、纠正火候），就在文字最后追加一个 JSON 代码块，内容为：',
+        '{"recipes":[{ ' + RECIPE_FIELDS_HOME + ' }]}',
+        '   一次给 1–2 道；不涉及具体菜时不要输出 JSON。',
+        '3. 用户问“为什么”时解释原理：为什么要焯水、为什么要宽油、为什么最后勾芡。',
+        '4. 用户说“太麻烦”“少放油”“没有这个调料”时，给可执行的替代方案，不要反问太多。'
+      ].join('\n');
+    }
+    return [
+      PERSONA_HEALTH,
+      '',
+      '对话要求：',
+      '1. 回答控制在 200 字以内，信息密度高，不寒暄。',
+      '2. 只要聊到具体菜品（新的推荐、替换、改做法），就在文字最后追加一个 JSON 代码块，内容为：',
+      '{"recipes":[{ ' + RECIPE_FIELDS + ' }]}',
+      '   一次给 1–3 道；不需要具体菜谱时不要输出 JSON。',
+      '3. 用户说“换一道”“太油了”“想加个汤”这类要求时，直接给替代方案，不要反问太多。'
+    ].join('\n');
+  }
+
+  function buildMessages(history, userText, mode) {
+    var msgs = [{ role: 'system', content: chatSystemPrompt(mode) }];
+    (history || []).forEach(function (m) {
+      if (m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim()) {
+        msgs.push({ role: m.role, content: m.content });
+      }
+    });
+    msgs.push({ role: 'user', content: String(userText || '') });
+    return msgs;
+  }
+
+  function buildBody(opts) {
+    opts = opts || {};
+    var body = {
+      model: opts.model || DEFAULT_MODEL,
+      messages: opts.messages || [],
+      temperature: typeof opts.temperature === 'number' ? opts.temperature : 0.7,
+      max_tokens: typeof opts.maxTokens === 'number' ? opts.maxTokens : 1600
+    };
+    if (opts.stream) body.stream = true;
+    if (opts.jsonMode) body.response_format = { type: 'json_object' };
+    return body;
+  }
+
+  /* ---------- JSON 抽取与归一化 ---------- */
+
+  function tryParse(text) {
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function extractJson(text) {
+    if (typeof text !== 'string') return null;
+    var s = text.trim();
+    if (!s) return null;
+
+    var fenced = s.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    if (fenced && fenced[1]) {
+      var inner = tryParse(fenced[1].trim());
+      if (inner) return inner;
+    }
+
+    var direct = tryParse(s);
+    if (direct) return direct;
+
+    var start = s.search(/[{[]/);
+    if (start < 0) return null;
+    var open = s.charAt(start);
+    var close = open === '{' ? '}' : ']';
+    var depth = 0;
+    var inStr = false;
+    var esc = false;
+    for (var i = start; i < s.length; i++) {
+      var c = s.charAt(i);
+      if (inStr) {
+        if (esc) esc = false;
+        else if (c === '\\') esc = true;
+        else if (c === '"') inStr = false;
+        continue;
+      }
+      if (c === '"') { inStr = true; continue; }
+      if (c === open) depth++;
+      else if (c === close) {
+        depth--;
+        if (depth === 0) {
+          var cand = s.slice(start, i + 1);
+          var parsed = tryParse(cand);
+          if (parsed) return parsed;
+          break;
+        }
+      }
+    }
+    return null;
+  }
+
+  function toNum(v, fallback) {
+    if (typeof v === 'number' && isFinite(v)) return v;
+    if (typeof v === 'string') {
+      var m = v.replace(/,/g, '').match(/-?\d+(?:\.\d+)?/);
+      if (m) return parseFloat(m[0]);
+    }
+    return fallback;
+  }
+
+  function toList(v) {
+    if (Array.isArray(v)) {
+      return v
+        .map(function (x) {
+          if (x === null || x === undefined) return '';
+          if (typeof x === 'string') return x.trim();
+          if (typeof x === 'object') return String(x.text || x.name || x.step || '').trim();
+          return String(x);
+        })
+        .filter(Boolean);
+    }
+    if (typeof v === 'string' && v.trim()) {
+      return v.split(/\r?\n|[；;]/).map(function (s) { return s.replace(/^\s*[-*\d.、]+/, '').trim(); }).filter(Boolean);
+    }
+    return [];
+  }
+
+  function toText(v) {
+    if (v === null || v === undefined) return '';
+    if (typeof v === 'string') return v.trim();
+    if (Array.isArray(v)) return v.map(toText).filter(Boolean).join('；');
+    if (typeof v === 'object') return String(v.text || v.name || v.content || '').trim();
+    return String(v);
+  }
+
+  function normalizeRecipe(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    var name = toText(raw.name || raw.title || raw.dish);
+    if (!name) return null;
+    return {
+      name: name,
+      kcal: Math.round(toNum(raw.kcal || raw.calories || raw.energy, 0)),
+      protein: Math.round(toNum(raw.protein || raw.protein_g, 0)),
+      time: toText(raw.time || raw.duration || raw.cookTime),
+      tags: toList(raw.tags || raw.labels).slice(0, 6),
+      ingredients: toList(raw.ingredients || raw.materials),
+      steps: toList(raw.steps || raw.method || raw.instructions),
+      why: toText(raw.why || raw.reason || raw.benefit || raw.note),
+      slot: toText(raw.slot || raw.meal || raw.mealTime),
+      cuisine: toText(raw.cuisine || raw.style || raw.region),
+      flavor: toText(raw.flavor || raw.taste),
+      difficulty: toText(raw.difficulty || raw.level),
+      tip: toText(raw.tip || raw.keyStep || raw.key || raw.trick)
+    };
+  }
+
+  function normalizeRecipes(raw) {
+    var list = [];
+    if (Array.isArray(raw)) list = raw;
+    else if (raw && Array.isArray(raw.recipes)) list = raw.recipes;
+    else if (raw && Array.isArray(raw.items)) list = raw.items;
+    else if (raw && raw.name) list = [raw];
+    var out = [];
+    list.forEach(function (item) {
+      var r = normalizeRecipe(item);
+      if (r) out.push(r);
+    });
+    return out;
+  }
+
+  function normalizeMenu(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    var mealsRaw = Array.isArray(raw.meals) ? raw.meals : [];
+    var meals = [];
+    mealsRaw.forEach(function (m) {
+      var r = normalizeRecipe(m);
+      if (r) meals.push(r);
+    });
+    if (!meals.length) return null;
+    var sum = meals.reduce(function (a, m) { return a + (m.kcal || 0); }, 0);
+    return {
+      title: toText(raw.title) || '今日健康菜单',
+      summary: toText(raw.summary || raw.intro),
+      totalKcal: Math.round(toNum(raw.totalKcal || raw.total_kcal, sum) || sum),
+      meals: meals,
+      tips: toList(raw.tips || raw.notes)
+    };
+  }
+
+  /* ---------- 错误与格式化 ---------- */
+
+  function formatError(status, payload) {
+    var msg = '';
+    if (payload && payload.error) {
+      msg = toText(payload.error.message || payload.error);
+    } else if (typeof payload === 'string') {
+      msg = payload.slice(0, 300);
+    }
+    if (status === 0) return '网络请求失败，可能是断网、代理拦截或接口超时。' + (msg ? '（' + msg + '）' : '');
+    if (status === 401) return 'API Key 无效或已过期（401）。请到 platform.agnes-ai.cn 重新生成。';
+    if (status === 403) return '这个 Key 没有该模型的调用权限（403）。';
+    if (status === 404) return '接口或模型不存在（404）：' + (msg || '检查 baseURL 与模型 id');
+    if (status === 429) return '请求太频繁或额度用尽（429），稍等一会儿再试。';
+    if (status === 400) return '请求被拒绝（400）：' + (msg || '参数不合法');
+    if (status >= 500) return '服务端错误（' + status + '），Agnes 那边暂时不稳定，稍后重试。';
+    return '请求失败（' + status + '）' + (msg ? '：' + msg : '');
+  }
+
+  function summarize(items) {
+    var kcal = 0;
+    var protein = 0;
+    (items || []).forEach(function (x) {
+      kcal += toNum(x && x.kcal, 0);
+      protein += toNum(x && x.protein, 0);
+    });
+    return { kcal: Math.round(kcal), protein: Math.round(protein), count: (items || []).length };
+  }
+
+  function listChatModels(payload) {
+    var data = payload && Array.isArray(payload.data) ? payload.data : [];
+    var out = [];
+    data.forEach(function (m) {
+      var id = toText(m && m.id);
+      if (!id) return;
+      if (!/^agnes-/i.test(id)) return;
+      if (NON_CHAT_MODEL.test(id)) return;
+      out.push({ id: id, name: id });
+    });
+    return out;
+  }
+
+  function modelLabel(id) {
+    var map = {
+      'agnes-2.5-flash': 'Agnes 2.5 Flash · 快而免费',
+      'agnes-3.0-flash': 'Agnes 3.0 Flash · 新一代免费',
+      'agnes-2.5-pro': 'Agnes 2.5 Pro · 更强，按量计费',
+      'agnes-2.5-pro-beta': 'Agnes 2.5 Pro Beta',
+      'agnes-2.5-pro-theta': 'Agnes 2.5 Pro Theta'
+    };
+    return map[id] || id;
+  }
+
+  return {
+    BASE_URL: BASE_URL,
+    DEFAULT_MODEL: DEFAULT_MODEL,
+    CHAT_TIMEOUT_MS: CHAT_TIMEOUT_MS,
+    TEST_TIMEOUT_MS: TEST_TIMEOUT_MS,
+    PERSONA: PERSONA,
+    PERSONA_HEALTH: PERSONA_HEALTH,
+    PERSONA_HOME: PERSONA_HOME,
+    PERSONA_NAMES: { health: '小膳', home: '老灶' },
+    personaFor: personaFor,
+    chatEndpoint: function () { return BASE_URL + '/chat/completions'; },
+    modelsEndpoint: function () { return BASE_URL + '/models'; },
+    dateLabel: dateLabel,
+    menuUserPrompt: menuUserPrompt,
+    searchUserPrompt: searchUserPrompt,
+    homeSearchPrompt: homeSearchPrompt,
+    chatSystemPrompt: chatSystemPrompt,
+    buildMessages: buildMessages,
+    buildBody: buildBody,
+    extractJson: extractJson,
+    normalizeRecipe: normalizeRecipe,
+    normalizeRecipes: normalizeRecipes,
+    normalizeMenu: normalizeMenu,
+    formatError: formatError,
+    summarize: summarize,
+    listChatModels: listChatModels,
+    modelLabel: modelLabel,
+    toList: toList,
+    toText: toText,
+    toNum: toNum
+  };
+});
+
+</script>
+<script>
+/*!
+ * 小膳 · 交互层
+ * 依赖 core.js（window.ChefCore）。所有网络请求直接发往 https://api.agnes-ai.cn/v1。
+ */
+(function () {
+  'use strict';
+
+  var C = window.ChefCore;
+  if (!C) {
+    document.body.innerHTML = '<p style="padding:32px;font-family:sans-serif">core.js 没有加载成功，请确认两个文件放在同一目录。</p>';
+    return;
+  }
+
+  var LS = {
+    key: 'xiaoshan.key',
+    model: 'xiaoshan.model',
+    goal: 'xiaoshan.goal',
+    avoid: 'xiaoshan.avoid',
+    menu: 'xiaoshan.menu',
+    book: 'xiaoshan.book',
+    mode: 'xiaoshan.mode',
+    verified: 'xiaoshan.verified'
+  };
+
+  var DEFAULT_GOAL = '均衡维持，每天 1800 大卡左右';
+
+  var CUISINES = ['川菜', '粤菜', '鲁菜', '苏菜', '湘菜', '浙菜', '闽菜', '徽菜', '东北菜', '西北菜', '云贵菜', '港式家常'];
+
+  var state = {
+    key: '',
+    model: C.DEFAULT_MODEL,
+    goal: DEFAULT_GOAL,
+    avoid: '',
+    menu: [],
+    book: [],
+    mode: 'health',
+    histories: { health: [], home: [] },
+    view: { health: null, home: null },
+    verified: false,
+    busy: false,
+    lastModels: []
+  };
+
+  function isHome() { return state.mode === 'home'; }
+
+  var el = {};
+
+  /* ---------- 工具 ---------- */
+
+  function ApiError(message, status) {
+    this.name = 'ApiError';
+    this.message = message;
+    this.status = status || 0;
+  }
+  ApiError.prototype = Object.create(Error.prototype);
+
+  function $(id) { return document.getElementById(id); }
+
+  function storageGet(k, fb) {
+    try {
+      var v = localStorage.getItem(k);
+      return v === null ? fb : v;
+    } catch (e) {
+      return fb;
+    }
+  }
+
+  function storageSet(k, v) {
+    try { localStorage.setItem(k, v); } catch (e) { /* 隐私模式忽略 */ }
+  }
+
+  function storageDel(k) {
+    try { localStorage.removeItem(k); } catch (e) { /* ignore */ }
+  }
+
+  var toastTimer = null;
+  function toast(msg, ms) {
+    if (!el.toast) return;
+    el.toast.textContent = msg;
+    el.toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.toast.classList.remove('show'); }, ms || 3200);
+  }
+
+  function btnLoad(btn, loading) {
+    if (!btn) return;
+    if (!btn.dataset.label) btn.dataset.label = btn.textContent;
+    btn.disabled = !!loading;
+    btn.textContent = loading ? '处理中…' : btn.dataset.label;
+  }
+
+  /* ---------- 网络 ---------- */
+
+  function headers(key) {
+    return {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + key
+    };
+  }
+
+  async function request(path, opts) {
+    opts = opts || {};
+    var key = opts.key || state.key;
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); }, opts.timeout || C.CHAT_TIMEOUT_MS);
+    var res;
+    try {
+      res = await fetch(C.BASE_URL + path, {
+        method: opts.method || 'GET',
+        headers: headers(key),
+        body: opts.body,
+        signal: ctrl.signal
+      });
+    } catch (err) {
+      clearTimeout(timer);
+      if (err && err.name === 'AbortError') {
+        throw new ApiError('请求超时，检查网络后重试（' + Math.round((opts.timeout || C.CHAT_TIMEOUT_MS) / 1000) + ' 秒）。', 0);
+      }
+      throw new ApiError(C.formatError(0, err && err.message), 0);
+    }
+    clearTimeout(timer);
+
+    var text = await res.text();
+    var data = null;
+    try { data = JSON.parse(text); } catch (e) { data = null; }
+    if (!res.ok) {
+      if (res.status === 401) {
+        state.verified = false;
+        storageDel(LS.verified);
+      }
+      updateStatus();
+      throw new ApiError(C.formatError(res.status, data || text), res.status);
+    }
+    return data;
+  }
+
+  async function callChat(messages, opts) {
+    opts = opts || {};
+    var body = C.buildBody({
+      model: opts.model || state.model,
+      messages: messages,
+      jsonMode: !!opts.jsonMode,
+      maxTokens: opts.maxTokens || 1600,
+      temperature: typeof opts.temperature === 'number' ? opts.temperature : 0.7
+    });
+    var data = await request('/chat/completions', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      key: opts.key,
+      timeout: opts.timeout
+    });
+    var choice = data && data.choices && data.choices[0];
+    var content = choice && choice.message && choice.message.content;
+    if (typeof content !== 'string' || !content.trim()) {
+      throw new ApiError('模型返回了空内容，请再试一次。', 0);
+    }
+    return content;
+  }
+
+  async function streamChat(messages, onDelta) {
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); }, C.CHAT_TIMEOUT_MS);
+    var res;
+    try {
+      res = await fetch(C.chatEndpoint(), {
+        method: 'POST',
+        headers: headers(state.key),
+        body: JSON.stringify(C.buildBody({ model: state.model, messages: messages, stream: true, maxTokens: 1200 })),
+        signal: ctrl.signal
+      });
+    } catch (err) {
+      clearTimeout(timer);
+      if (err && err.name === 'AbortError') throw new ApiError('请求超时，稍后重试。', 0);
+      throw new ApiError(C.formatError(0, err && err.message), 0);
+    }
+
+    if (!res.ok) {
+      clearTimeout(timer);
+      var t = await res.text();
+      var d = null;
+      try { d = JSON.parse(t); } catch (e) { d = null; }
+      throw new ApiError(C.formatError(res.status, d || t), res.status);
+    }
+
+    var reader = res.body.getReader();
+    var decoder = new TextDecoder('utf-8');
+    var buffer = '';
+    var full = '';
+    try {
+      for (;;) {
+        var chunk = await reader.read();
+        if (chunk.done) break;
+        buffer += decoder.decode(chunk.value, { stream: true });
+        var nl;
+        while ((nl = buffer.indexOf('\n')) >= 0) {
+          var line = buffer.slice(0, nl).trim();
+          buffer = buffer.slice(nl + 1);
+          if (!line || line.charAt(0) === ':') continue;
+          if (line.indexOf('data:') !== 0) continue;
+          var payload = line.slice(5).trim();
+          if (!payload || payload === '[DONE]') continue;
+          var json = null;
+          try { json = JSON.parse(payload); } catch (e) { continue; }
+          var delta = json.choices && json.choices[0] && json.choices[0].delta;
+          var piece = delta && delta.content;
+          if (typeof piece === 'string' && piece) {
+            full += piece;
+            onDelta(piece);
+          }
+        }
+      }
+    } finally {
+      clearTimeout(timer);
+      try { reader.releaseLock(); } catch (e) { /* ignore */ }
+    }
+    return full;
+  }
+
+  /* ---------- 状态 ---------- */
+
+  function updateStatus() {
+    if (!el.connPill) return;
+    el.connPill.dataset.state = state.verified ? 'ok' : (state.key ? 'idle' : 'bad');
+    el.connText.textContent = state.verified
+      ? '已连接 · ' + state.model
+      : (state.key ? '已填 Key · 未验证' : '未连接 · 点此设置');
+    el.connPill.title = state.key ? '点击打开 API 设置' : '先填写 Agnes API Key';
+  }
+
+  function ensureKey() {
+    if (state.key) return true;
+    toast('先填一下 Agnes API Key，才能让小膳开始做菜。');
+    openSettings();
+    setTimeout(function () { if (el.keyInput) el.keyInput.focus(); }, 120);
+    return false;
+  }
+
+  /* ---------- 渲染：菜谱卡片 ---------- */
+
+  function statChip(text) {
+    var s = document.createElement('span');
+    s.className = 'stat';
+    s.textContent = text;
+    return s;
+  }
+
+  function section(title, items, ordered) {
+    if (!items || !items.length) return null;
+    var wrap = document.createElement('div');
+    wrap.className = 'card-section';
+    var h = document.createElement('h4');
+    h.textContent = title;
+    wrap.appendChild(h);
+    var list = document.createElement(ordered ? 'ol' : 'ul');
+    if (ordered) list.style.paddingLeft = '18px';
+    items.forEach(function (t) {
+      var li = document.createElement('li');
+      li.textContent = t;
+      list.appendChild(li);
+    });
+    wrap.appendChild(list);
+    return wrap;
+  }
+
+  function recipeCard(recipe, mode) {
+    var home = mode === 'home';
+    var card = document.createElement('article');
+    card.className = 'card' + (home ? ' card-home' : '');
+
+    var top = document.createElement('div');
+    top.className = 'card-top';
+    var h3 = document.createElement('h3');
+    h3.textContent = recipe.name;
+    top.appendChild(h3);
+    var badgeText = home ? (recipe.cuisine || '家常菜') : recipe.slot;
+    if (badgeText) {
+      var badge = document.createElement('span');
+      badge.className = 'slot-badge' + (home ? ' cuisine' : '');
+      badge.textContent = badgeText;
+      top.appendChild(badge);
+    }
+    card.appendChild(top);
+
+    var stats = document.createElement('div');
+    stats.className = 'card-stats';
+    if (home) {
+      if (recipe.difficulty) stats.appendChild(statChip('🍳 ' + recipe.difficulty));
+      if (recipe.time) stats.appendChild(statChip('⏱ ' + recipe.time));
+      if (recipe.flavor) stats.appendChild(statChip('🌶 ' + recipe.flavor));
+    } else {
+      if (recipe.kcal) stats.appendChild(statChip('🔥 ' + recipe.kcal + ' 大卡'));
+      if (recipe.protein) stats.appendChild(statChip('💪 蛋白 ' + recipe.protein + ' g'));
+      if (recipe.time) stats.appendChild(statChip('⏱ ' + recipe.time));
+    }
+    (recipe.tags || []).slice(0, 3).forEach(function (t) { stats.appendChild(statChip('#' + t)); });
+    if (stats.children.length) card.appendChild(stats);
+
+    if (home && recipe.tip) {
+      var tip = document.createElement('p');
+      tip.className = 'card-tip';
+      tip.textContent = '🔑 关键一步：' + recipe.tip;
+      card.appendChild(tip);
+    }
+
+    if (!home && recipe.why) {
+      var why = document.createElement('p');
+      why.className = 'card-why';
+      why.textContent = recipe.why;
+      card.appendChild(why);
+    }
+
+    var ing = section('食材', recipe.ingredients, false);
+    if (ing) card.appendChild(ing);
+    var steps = section('做法', recipe.steps, true);
+    if (steps) card.appendChild(steps);
+
+    var actions = document.createElement('div');
+    actions.className = 'card-actions';
+
+    var addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'btn small primary';
+    addBtn.textContent = home ? '收进菜谱本' : '加入今日菜单';
+    addBtn.addEventListener('click', function () {
+      var ok = home ? addToBook(recipe) : addToMenu(recipe);
+      if (ok) {
+        addBtn.textContent = '已收藏 ✓';
+        addBtn.disabled = true;
+      }
+    });
+    actions.appendChild(addBtn);
+
+    var tweakBtn = document.createElement('button');
+    tweakBtn.type = 'button';
+    tweakBtn.className = 'btn small ghost';
+    tweakBtn.textContent = home ? '问问老灶' : '让小膳改改';
+    tweakBtn.addEventListener('click', function () {
+      if (!ensureKey()) return;
+      document.getElementById('chatInput').value = home
+        ? '「' + recipe.name + '」我照着做总是差一点，火候和调味上最容易错在哪？'
+        : '把「' + recipe.name + '」改成更简单、食材更好买的版本，热量别变太多。';
+      document.getElementById('chatInput').focus();
+      document.querySelector('.chat').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    actions.appendChild(tweakBtn);
+
+    card.appendChild(actions);
+    return card;
+  }
+
+  function showSkeleton(n) {
+    clearView();
+    var wrap = document.createElement('div');
+    wrap.className = 'cards';
+    for (var i = 0; i < (n || 4); i++) {
+      var d = document.createElement('div');
+      d.className = 'skeleton';
+      wrap.appendChild(d);
+    }
+    el.cardsHost.appendChild(wrap);
+  }
+
+  function clearView() {
+    el.emptyHealth.hidden = true;
+    el.emptyHome.hidden = true;
+    el.cardsHost.innerHTML = '';
+  }
+
+  function renderRecipes(recipes, opts) {
+    opts = opts || {};
+    var mode = opts.mode || state.mode;
+    if (!opts.replay) state.view[mode] = { recipes: recipes, opts: opts };
+    clearView();
+
+    if (opts.hero) {
+      var hero = document.createElement('div');
+      hero.className = 'menu-hero';
+      var h2 = document.createElement('h2');
+      h2.textContent = opts.hero.title;
+      hero.appendChild(h2);
+      if (opts.hero.summary) {
+        var p = document.createElement('p');
+        p.textContent = opts.hero.summary;
+        hero.appendChild(p);
+      }
+      var meta = document.createElement('div');
+      meta.className = 'meta';
+      if (opts.hero.totalKcal) {
+        var t1 = document.createElement('span');
+        t1.className = 'tag';
+        t1.textContent = '合计 ' + opts.hero.totalKcal + ' 大卡';
+        meta.appendChild(t1);
+      }
+      if (opts.note) {
+        var t2 = document.createElement('span');
+        t2.className = 'tag warm';
+        t2.textContent = opts.note;
+        meta.appendChild(t2);
+      }
+      if (meta.children.length) hero.appendChild(meta);
+      el.cardsHost.appendChild(hero);
+    } else if (opts.note) {
+      var note = document.createElement('p');
+      note.className = 'card-why';
+      note.style.padding = '0 2px';
+      note.textContent = opts.note;
+      el.cardsHost.appendChild(note);
+    }
+
+    var grid = document.createElement('div');
+    grid.className = 'cards';
+    recipes.forEach(function (r) { grid.appendChild(recipeCard(r, mode)); });
+    el.cardsHost.appendChild(grid);
+
+    if (opts.tips && opts.tips.length) {
+      var tipBox = document.createElement('div');
+      tipBox.className = 'menu-hero';
+      var tipTitle = document.createElement('h2');
+      tipTitle.textContent = mode === 'home' ? '老灶的提醒' : '今天的小建议';
+      tipBox.appendChild(tipTitle);
+      var ul = document.createElement('ul');
+      ul.style.marginTop = '8px';
+      opts.tips.forEach(function (t) {
+        var li = document.createElement('li');
+        li.className = 'card-why';
+        li.textContent = '· ' + t;
+        ul.appendChild(li);
+      });
+      tipBox.appendChild(ul);
+      el.cardsHost.appendChild(tipBox);
+    }
+  }
+
+  /* ---------- 今日菜单 ---------- */
+
+  function addToMenu(recipe) {
+    var exists = state.menu.some(function (m) { return m.name === recipe.name; });
+    if (exists) {
+      toast('「' + recipe.name + '」已经在菜单里了。');
+      return false;
+    }
+    state.menu.push({
+      name: recipe.name,
+      kcal: recipe.kcal || 0,
+      protein: recipe.protein || 0,
+      slot: recipe.slot || ''
+    });
+    persistMenu();
+    renderMenu();
+    toast('已加入「' + recipe.name + '」');
+    return true;
+  }
+
+  function renderMenu() {
+    if (!el.menuList) return;
+    el.menuList.innerHTML = '';
+    state.menu.forEach(function (item, index) {
+      var li = document.createElement('li');
+      li.className = 'menu-item';
+
+      var left = document.createElement('div');
+      var name = document.createElement('div');
+      name.className = 'mi-name';
+      name.textContent = (item.slot ? item.slot + ' · ' : '') + item.name;
+      left.appendChild(name);
+
+      var sub = document.createElement('div');
+      sub.className = 'mi-sub';
+      sub.textContent = (item.kcal || 0) + ' 大卡 · 蛋白 ' + (item.protein || 0) + ' g';
+      left.appendChild(sub);
+      li.appendChild(left);
+
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.title = '从菜单移除';
+      del.textContent = '✕';
+      del.addEventListener('click', function () {
+        state.menu.splice(index, 1);
+        persistMenu();
+        renderMenu();
+      });
+      li.appendChild(del);
+      el.menuList.appendChild(li);
+    });
+
+    var sum = C.summarize(state.menu);
+    el.menuCount.textContent = String(sum.count);
+    el.menuEmpty.hidden = sum.count > 0;
+    if (sum.count > 0) {
+      el.menuTotals.hidden = false;
+      el.menuTotals.innerHTML = '';
+      var a = document.createElement('span');
+      a.innerHTML = '总热量 <strong>' + sum.kcal + '</strong> 大卡';
+      var b = document.createElement('span');
+      b.innerHTML = '蛋白质 <strong>' + sum.protein + '</strong> g';
+      el.menuTotals.appendChild(a);
+      el.menuTotals.appendChild(b);
+    } else {
+      el.menuTotals.hidden = true;
+    }
+  }
+
+  function persistMenu() {
+    storageSet(LS.menu, JSON.stringify(state.menu));
+  }
+
+  /* ---------- 菜谱本（家常模式） ---------- */
+
+  function addToBook(recipe) {
+    var exists = state.book.some(function (m) { return m.name === recipe.name; });
+    if (exists) {
+      toast('「' + recipe.name + '」已经在本子里了。');
+      return false;
+    }
+    state.book.push({
+      name: recipe.name,
+      cuisine: recipe.cuisine || '家常菜',
+      difficulty: recipe.difficulty || '',
+      time: recipe.time || ''
+    });
+    persistBook();
+    renderBook();
+    toast('已收进菜谱本：' + recipe.name);
+    return true;
+  }
+
+  function renderBook() {
+    if (!el.bookList) return;
+    el.bookList.innerHTML = '';
+    state.book.forEach(function (item, index) {
+      var li = document.createElement('li');
+      li.className = 'menu-item';
+
+      var left = document.createElement('div');
+      var name = document.createElement('div');
+      name.className = 'mi-name';
+      name.textContent = item.name;
+      left.appendChild(name);
+
+      var sub = document.createElement('div');
+      sub.className = 'mi-sub';
+      sub.textContent = [item.cuisine, item.difficulty, item.time].filter(Boolean).join(' · ');
+      left.appendChild(sub);
+      li.appendChild(left);
+
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.title = '从菜谱本移除';
+      del.textContent = '×';
+      del.addEventListener('click', function () {
+        state.book.splice(index, 1);
+        persistBook();
+        renderBook();
+      });
+      li.appendChild(del);
+      el.bookList.appendChild(li);
+    });
+
+    el.bookCount.textContent = String(state.book.length);
+    el.bookEmpty.hidden = state.book.length > 0;
+    if (state.book.length) {
+      var set = {};
+      state.book.forEach(function (b) { set[b.cuisine] = 1; });
+      var cuisines = Object.keys(set).length;
+      el.bookSummary.hidden = false;
+      el.bookSummary.innerHTML = '';
+      var a = document.createElement('span');
+      a.innerHTML = '共 <strong>' + state.book.length + '</strong> 道菜';
+      var b = document.createElement('span');
+      b.innerHTML = '覆盖 <strong>' + cuisines + '</strong> 个菜系';
+      el.bookSummary.appendChild(a);
+      el.bookSummary.appendChild(b);
+    } else {
+      el.bookSummary.hidden = true;
+    }
+  }
+
+  function persistBook() {
+    storageSet(LS.book, JSON.stringify(state.book));
+  }
+
+  /* ---------- 模式切换 ---------- */
+
+  var GREETING = {
+    health: '我是小膳 👨‍🍳 今天想吃点什么？可以直接点上面的「生成今日菜单」，或者告诉我你想吃什么、手边有什么食材。',
+    home: '我是老灶 👨‍🍳 想学哪道家常菜？点上面的菜系标签看看，或者直接写菜名（比如「鱼香肉丝」「东北乱炖」），我把火候和顺序讲清楚。'
+  };
+
+  function greeting() {
+    var base = GREETING[state.mode];
+    if (state.key) return base;
+    return '先点右上角「API 设置」填一个 Agnes API Key（sk- 开头），两种模式共用一个 Key，填一次就行。';
+  }
+
+  function showEmpty() {
+    var home = isHome();
+    clearView();
+    el.emptyHealth.hidden = home;
+    el.emptyHome.hidden = !home;
+  }
+
+  function replayView() {
+    var v = state.view[state.mode];
+    if (!v) { showEmpty(); return; }
+    var opts = {};
+    Object.keys(v.opts).forEach(function (k) { opts[k] = v.opts[k]; });
+    opts.mode = state.mode;
+    opts.replay = true;
+    renderRecipes(v.recipes, opts);
+  }
+
+  function renderChat() {
+    el.chatLog.innerHTML = '';
+    var h = state.histories[state.mode];
+    if (!h.length) {
+      appendMessage('chef', greeting());
+      return;
+    }
+    h.forEach(function (m) {
+      appendMessage(m.role === 'user' ? 'user' : 'chef', m.role === 'user'
+        ? m.content
+        : (m.content.replace(/```(?:json)?[\s\S]*?```/gi, '').trim() || '（菜谱见下方卡片）'));
+    });
+  }
+
+  function setMode(next, opts) {
+    opts = opts || {};
+    if (next !== 'home' && next !== 'health') next = 'health';
+    if (next === state.mode && !opts.force) return;
+    state.mode = next;
+    storageSet(LS.mode, next);
+
+    document.body.dataset.mode = next;
+    document.querySelectorAll('.mode-btn').forEach(function (b) {
+      var on = b.getAttribute('data-mode') === next;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+
+    el.chipsHealth.hidden = next === 'home';
+    el.chipsHome.hidden = next !== 'home';
+    el.sideHealth.hidden = next === 'home';
+    el.sideHome.hidden = next !== 'home';
+    el.healthOnly.hidden = next === 'home';
+    el.searchInput.placeholder = next === 'home'
+      ? '想学什么菜？例如「鱼香肉丝」「可乐鸡翅」「东北乱炖」'
+      : '想吃什么？例如：高蛋白低脂的鸡胸肉、15 分钟快手菜、控糖晚餐';
+    el.chatHint.textContent = next === 'home'
+      ? '比如「鱼香肉丝为什么不出红油」「换成不辣的版本」「教我做糖醋排骨」'
+      : '比如「午餐想吃鱼」「换一道更简单的早餐」「帮我改成带饭版」';
+    el.brandSub.textContent = next === 'home' ? '一周不重样 · 八大菜系家常菜' : '每日健康菜谱 · 营养师 × 厨师';
+
+    if (opts.keepBoard !== true) replayView();
+    renderChat();
+    if (opts.toast !== false) {
+      toast(next === 'home' ? '已切到家常模式：学做各地家常菜' : '已切回健康模式：配每日营养菜单');
+    }
+  }
+
+  /* ---------- 生成菜单 ---------- */
+
+  async function generateMenu() {
+    if (isHome()) return;
+    if (!ensureKey()) return;
+    if (state.busy) return;
+    state.busy = true;
+    showSkeleton(4);
+    var menuBtn = document.getElementById('btnMenu');
+    btnLoad(menuBtn, true);
+    setBusyState(true);
+
+    var prompt = C.menuUserPrompt({ goal: state.goal, avoid: state.avoid, date: C.dateLabel() });
+    var messages = [
+      { role: 'system', content: C.PERSONA },
+      { role: 'user', content: prompt }
+    ];
+
+    try {
+      var content = await callChat(messages, { jsonMode: true, maxTokens: 2400 });
+      var json = C.extractJson(content);
+      var menu = C.normalizeMenu(json);
+      if (!menu) {
+        content = await callChat(messages.concat([
+          { role: 'assistant', content: content },
+          { role: 'user', content: '上面的输出不是合法的菜谱 JSON。请严格只输出 JSON 对象，不要任何解释。' }
+        ]), { jsonMode: true, maxTokens: 2400 });
+        menu = C.normalizeMenu(C.extractJson(content));
+      }
+      if (!menu) throw new ApiError('模型的输出没能解析成菜谱，再点一次试试。', 0);
+
+      renderRecipes(menu.meals, {
+        hero: { title: menu.title, summary: menu.summary, totalKcal: menu.totalKcal },
+        tips: menu.tips
+      });
+      el.board.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) {
+      clearView();
+      var box = document.createElement('div');
+      box.className = 'board-empty';
+      box.innerHTML = '<div class="empty-emoji">🥲</div>';
+      var h = document.createElement('h2');
+      h.textContent = '这一顿没配出来';
+      box.appendChild(h);
+      var p = document.createElement('p');
+      p.textContent = err.message || String(err);
+      box.appendChild(p);
+      el.cardsHost.appendChild(box);
+    } finally {
+      state.busy = false;
+      btnLoad(menuBtn, false);
+      setBusyState(false);
+    }
+  }
+
+  /* ---------- 搜索 ---------- */
+
+  async function search(query, opts) {
+    opts = opts || {};
+    if (!ensureKey()) return;
+    if (state.busy) return;
+    state.busy = true;
+    showSkeleton(4);
+    setBusyState(true);
+    var mode = state.mode;
+    var home = mode === 'home';
+    var prompt = home
+      ? C.homeSearchPrompt({ query: query, cuisine: opts.cuisine || '', difficulty: opts.difficulty || '' })
+      : C.searchUserPrompt({ query: query, filters: opts.filters || [] });
+    var system = C.personaFor(mode);
+
+    try {
+      var content = await callChat([
+        { role: 'system', content: system },
+        { role: 'user', content: prompt }
+      ], { jsonMode: true, maxTokens: 2400 });
+
+      var json = C.extractJson(content);
+      var recipes = C.normalizeRecipes(json);
+      if (!recipes.length) {
+        content = await callChat([
+          { role: 'system', content: system },
+          { role: 'user', content: prompt },
+          { role: 'assistant', content: content },
+          { role: 'user', content: '输出不是合法 JSON。请只输出 {"recipes":[...]}，不要任何解释。' }
+        ], { jsonMode: true, maxTokens: 2400 });
+        json = C.extractJson(content);
+        recipes = C.normalizeRecipes(json);
+      }
+      if (!recipes.length) throw new ApiError('没解析出菜谱，换个说法再搜一次。', 0);
+
+      renderRecipes(recipes, { note: json && json.note ? String(json.note) : '', mode: mode });
+      el.board.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) {
+      clearView();
+      var box = document.createElement('div');
+      box.className = 'board-empty';
+      box.innerHTML = '<div class="empty-emoji">🥲</div>';
+      var h = document.createElement('h2');
+      h.textContent = '这次没搜到';
+      box.appendChild(h);
+      var p = document.createElement('p');
+      p.textContent = err.message || String(err);
+      box.appendChild(p);
+      el.cardsHost.appendChild(box);
+    } finally {
+      state.busy = false;
+      setBusyState(false);
+    }
+  }
+
+  function randomCuisine() {
+    return CUISINES[Math.floor(Math.random() * CUISINES.length)];
+  }
+
+  async function recommendDish() {
+    if (!isHome()) return;
+    var cuisine = randomCuisine();
+    el.searchInput.value = cuisine;
+    toast('今天给你挑：' + cuisine + ' —— 想到什么做什么');
+    await search('', { cuisine: cuisine });
+  }
+
+  function setBusyState(busy) {
+    if (!el.connPill) return;
+    if (busy) {
+      el.connPill.dataset.state = 'busy';
+      el.connText.textContent = '正在准备…';
+    } else {
+      updateStatus();
+    }
+  }
+
+  /* ---------- 对话 ---------- */
+
+  function appendMessage(role, text) {
+    var wrap = document.createElement('div');
+    wrap.className = 'msg ' + role;
+    var avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.textContent = role === 'user' ? '🙋' : '👨‍🍳';
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = text;
+    wrap.appendChild(avatar);
+    wrap.appendChild(bubble);
+    el.chatLog.appendChild(wrap);
+    el.chatLog.scrollTop = el.chatLog.scrollHeight;
+    return bubble;
+  }
+
+  function appendChatCards(recipes, mode) {
+    if (!recipes.length) return;
+    var home = mode === 'home';
+    var wrap = document.createElement('div');
+    wrap.className = 'msg chef';
+    var avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.textContent = '👨‍🍳';
+    var holder = document.createElement('div');
+    var strip = document.createElement('div');
+    strip.className = 'chat-cards';
+    recipes.forEach(function (r) {
+      var card = document.createElement('div');
+      card.className = 'mini-card';
+      var b = document.createElement('b');
+      b.textContent = r.name;
+      card.appendChild(b);
+      var span = document.createElement('span');
+      span.textContent = home
+        ? [r.cuisine, r.difficulty, r.time].filter(Boolean).join(' · ')
+        : (r.kcal || 0) + ' 大卡' + (r.protein ? ' · 蛋白 ' + r.protein + 'g' : '');
+      card.appendChild(span);
+      var add = document.createElement('button');
+      add.type = 'button';
+      add.className = 'link-btn';
+      add.textContent = home ? '收进菜谱本' : '加入菜单';
+      add.addEventListener('click', function () {
+        if (home) addToBook(r); else addToMenu(r);
+      });
+      card.appendChild(add);
+      strip.appendChild(card);
+    });
+    holder.appendChild(strip);
+    wrap.appendChild(avatar);
+    wrap.appendChild(holder);
+    el.chatLog.appendChild(wrap);
+    el.chatLog.scrollTop = el.chatLog.scrollHeight;
+  }
+
+  async function sendChat(text) {
+    var msg = String(text || '').trim();
+    if (!msg) return;
+    if (!ensureKey()) return;
+    if (state.busy) return;
+
+    var mode = state.mode;
+    state.busy = true;
+    appendMessage('user', msg);
+    el.chatInput.value = '';
+    var bubble = appendMessage('chef', '');
+    bubble.classList.add('thinking');
+    bubble.textContent = (mode === 'home' ? '老灶正在想…' : '小膳正在想…');
+
+    var messages = C.buildMessages(state.histories[mode], msg, mode);
+    var acc = '';
+    var started = false;
+
+    try {
+      await streamChat(messages, function (delta) {
+        if (!started) {
+          started = true;
+          bubble.classList.remove('thinking');
+          bubble.textContent = '';
+        }
+        acc += delta;
+        bubble.textContent = acc;
+        el.chatLog.scrollTop = el.chatLog.scrollHeight;
+      });
+    } catch (err) {
+      // 流式失败（个别网关不支持）就退回整段请求
+      try {
+        acc = await callChat(messages, { maxTokens: 1200 });
+        bubble.classList.remove('thinking');
+        bubble.textContent = acc;
+      } catch (err2) {
+        bubble.classList.remove('thinking');
+        bubble.textContent = '出错了：' + (err2.message || String(err2));
+        state.busy = false;
+        return;
+      }
+    }
+
+    if (!acc.trim()) acc = '（这次没说出话，再问一次试试。）';
+    bubble.textContent = acc.replace(/```(?:json)?[\s\S]*?```/gi, '').trim() || '（菜谱见下方卡片）';
+
+    var json = C.extractJson(acc);
+    var recipes = C.normalizeRecipes(json);
+    appendChatCards(recipes, mode);
+
+    var hist = state.histories[mode];
+    hist.push({ role: 'user', content: msg });
+    hist.push({ role: 'assistant', content: acc });
+    if (hist.length > 12) state.histories[mode] = hist.slice(-12);
+
+    state.busy = false;
+  }
+
+  /* ---------- 设置 ---------- */
+
+  function openSettings() {
+    if (!el.settingsDialog) return;
+    el.keyInput.value = state.key;
+    el.modelSelect.value = state.model;
+    el.goalSelect.value = state.goal;
+    el.avoidInput.value = state.avoid;
+    el.testResult.textContent = state.verified ? '上次测试：连接正常' : '还没测试';
+    el.testResult.className = 'test-result';
+    if (typeof el.settingsDialog.showModal === 'function') el.settingsDialog.showModal();
+    else el.settingsDialog.setAttribute('open', '');
+  }
+
+  function closeSettings() {
+    if (typeof el.settingsDialog.close === 'function') el.settingsDialog.close();
+    else el.settingsDialog.removeAttribute('open');
+  }
+
+  async function testConnection() {
+    var key = el.keyInput.value.trim();
+    var model = el.modelSelect.value;
+    if (!key) {
+      el.testResult.className = 'test-result bad';
+      el.testResult.textContent = '请先填入 API Key';
+      return;
+    }
+
+    btnLoad(el.btnTest, true);
+    el.testResult.className = 'test-result';
+    el.testResult.textContent = '正在连接 Agnes…';
+
+    var t0 = performance.now();
+    try {
+      var models = await request('/models', { key: key, timeout: C.TEST_TIMEOUT_MS });
+      var list = C.listChatModels(models);
+      var t1 = performance.now();
+      state.lastModels = list;
+
+      if (list.length) {
+        var keep = el.modelSelect.value;
+        el.modelSelect.innerHTML = '';
+        list.forEach(function (m) {
+          var opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = C.modelLabel(m.id);
+          el.modelSelect.appendChild(opt);
+        });
+        el.modelSelect.value = list.some(function (m) { return m.id === keep; }) ? keep : list[0].id;
+      }
+
+      var t2 = performance.now();
+      await callChat([{ role: 'user', content: '只回复两个字：可以' }], {
+        key: key,
+        model: model,
+        maxTokens: 16,
+        temperature: 0,
+        timeout: C.TEST_TIMEOUT_MS
+      });
+      var t3 = performance.now();
+
+      el.testResult.className = 'test-result ok';
+      el.testResult.textContent = '✓ 连通正常 · 可用模型 ' + list.length + ' 个 · 列表 ' + Math.round(t1 - t0) + ' ms · 对话 ' + Math.round(t3 - t2) + ' ms';
+      state.verified = true;
+      state.key = key;
+      state.model = el.modelSelect.value;
+      storageSet(LS.key, state.key);
+      storageSet(LS.model, state.model);
+      storageSet(LS.verified, '1');
+      updateStatus();
+      toast('连接成功，可以用啦 🎉');
+    } catch (err) {
+      state.verified = false;
+      updateStatus();
+      el.testResult.className = 'test-result bad';
+      el.testResult.textContent = '✗ ' + (err.message || String(err));
+    } finally {
+      btnLoad(el.btnTest, false);
+    }
+  }
+
+  function saveSettings(e) {
+    if (e) e.preventDefault();
+    var key = el.keyInput.value.trim();
+    state.key = key;
+    state.model = el.modelSelect.value || C.DEFAULT_MODEL;
+    state.goal = el.goalSelect.value || DEFAULT_GOAL;
+    state.avoid = el.avoidInput.value.trim();
+    storageSet(LS.key, state.key);
+    storageSet(LS.model, state.model);
+    storageSet(LS.goal, state.goal);
+    storageSet(LS.avoid, state.avoid);
+    updateStatus();
+    closeSettings();
+    toast(state.key ? '设置已保存' : '已保存，但还没有填 Key');
+  }
+
+  /* ---------- 绑定 ---------- */
+
+  function cacheEls() {
+    el = {
+      connPill: $('connPill'),
+      connText: $('connText'),
+      connDot: $('connDot'),
+      chatLog: $('chatLog'),
+      chatInput: $('chatInput'),
+      chatForm: $('chatForm'),
+      btnChatSend: $('btnChatSend'),
+      board: $('board'),
+      searchForm: $('searchForm'),
+      searchInput: $('searchInput'),
+      btnSearch: $('btnSearch'),
+      menuList: $('menuList'),
+      menuCount: $('menuCount'),
+      menuEmpty: $('menuEmpty'),
+      menuTotals: $('menuTotals'),
+      btnClearMenu: $('btnClearMenu'),
+      chipsHealth: $('chipsHealth'),
+      chipsHome: $('chipsHome'),
+      sideHealth: $('sideHealth'),
+      sideHome: $('sideHome'),
+      emptyHealth: $('emptyHealth'),
+      emptyHome: $('emptyHome'),
+      cardsHost: $('cardsHost'),
+      healthOnly: $('healthOnlyFields'),
+      bookList: $('bookList'),
+      bookCount: $('bookCount'),
+      bookEmpty: $('bookEmpty'),
+      bookSummary: $('bookSummary'),
+      btnClearBook: $('btnClearBook'),
+      chatHint: $('chatHint'),
+      brandSub: $('brandSub'),
+      settingsDialog: $('settingsDialog'),
+      settingsForm: $('settingsForm'),
+      keyInput: $('keyInput'),
+      keyToggle: $('keyToggle'),
+      modelSelect: $('modelSelect'),
+      goalSelect: $('goalSelect'),
+      avoidInput: $('avoidInput'),
+      btnTest: $('btnTest'),
+      testResult: $('testResult'),
+      btnClearKey: $('btnClearKey'),
+      btnSaveSettings: $('btnSaveSettings'),
+      toast: $('toast')
+    };
+  }
+
+  function bind() {
+    el.connPill.addEventListener('click', openSettings);
+    $('btnOpenSettings').addEventListener('click', openSettings);
+
+    document.querySelectorAll('.mode-btn').forEach(function (b) {
+      b.addEventListener('click', function () { setMode(b.getAttribute('data-mode')); });
+    });
+
+    el.keyToggle.addEventListener('click', function () {
+      var hidden = el.keyInput.type === 'password';
+      el.keyInput.type = hidden ? 'text' : 'password';
+      el.keyToggle.textContent = hidden ? '隐藏' : '显示';
+    });
+
+    el.btnTest.addEventListener('click', testConnection);
+
+    el.settingsForm.addEventListener('submit', function (e) {
+      var submitter = e.submitter;
+      if (submitter && submitter.value === 'cancel') {
+        e.preventDefault();
+        closeSettings();
+        return;
+      }
+      saveSettings(e);
+    });
+
+    el.btnClearKey.addEventListener('click', function () {
+      state.key = '';
+      state.verified = false;
+      storageDel(LS.key);
+      storageDel(LS.verified);
+      el.keyInput.value = '';
+      el.testResult.className = 'test-result';
+      el.testResult.textContent = '已清除本机 Key';
+      updateStatus();
+    });
+
+    el.searchForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var q = el.searchInput.value.trim();
+      if (!q) {
+        toast(isHome() ? '写个菜名试试，比如「鱼香肉丝」' : '先写点想吃的，比如「番茄鸡蛋」');
+        return;
+      }
+      search(q, {});
+    });
+
+    document.querySelectorAll('.chip[data-q]').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        var q = chip.getAttribute('data-q');
+        el.searchInput.value = q;
+        search(q, {});
+      });
+    });
+
+    document.querySelectorAll('.chip[data-cuisine]').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        var cuisine = chip.getAttribute('data-cuisine');
+        el.searchInput.value = cuisine;
+        search('', { cuisine: cuisine });
+      });
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest) return;
+      var act = e.target.closest('[data-action="menu"], [data-action="dish"], [data-cuisine], [data-q]');
+      if (!act) return;
+      var action = act.getAttribute('data-action');
+      if (action === 'menu') {
+        e.preventDefault();
+        generateMenu();
+      } else if (action === 'dish') {
+        e.preventDefault();
+        recommendDish();
+      } else if (act.hasAttribute('data-cuisine') && !act.classList.contains('chip')) {
+        e.preventDefault();
+        var c = act.getAttribute('data-cuisine');
+        el.searchInput.value = c;
+        search('', { cuisine: c });
+      } else if (act.hasAttribute('data-q') && !act.classList.contains('chip')) {
+        e.preventDefault();
+        var q = act.getAttribute('data-q');
+        el.searchInput.value = q;
+        search(q, { filters: [q] });
+      }
+    });
+
+    el.btnClearMenu.addEventListener('click', function () {
+      if (!state.menu.length) return;
+      state.menu = [];
+      persistMenu();
+      renderMenu();
+      toast('菜单已清空');
+    });
+
+    el.btnClearBook.addEventListener('click', function () {
+      if (!state.book.length) return;
+      state.book = [];
+      persistBook();
+      renderBook();
+      toast('菜谱本已清空');
+    });
+
+    el.chatForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      sendChat(el.chatInput.value);
+    });
+  }
+
+  function load() {
+    state.key = storageGet(LS.key, '');
+    state.model = storageGet(LS.model, C.DEFAULT_MODEL) || C.DEFAULT_MODEL;
+    state.goal = storageGet(LS.goal, DEFAULT_GOAL) || DEFAULT_GOAL;
+    state.avoid = storageGet(LS.avoid, '');
+    state.mode = storageGet(LS.mode, 'health') === 'home' ? 'home' : 'health';
+    state.verified = storageGet(LS.verified, '') === '1' && !!state.key;
+    try {
+      var raw = storageGet(LS.menu, '[]');
+      var parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) state.menu = parsed;
+    } catch (e) {
+      state.menu = [];
+    }
+    try {
+      var rawBook = storageGet(LS.book, '[]');
+      var parsedBook = JSON.parse(rawBook);
+      if (Array.isArray(parsedBook)) state.book = parsedBook;
+    } catch (e) {
+      state.book = [];
+    }
+  }
+
+  function init() {
+    cacheEls();
+    load();
+    bind();
+    renderMenu();
+    renderBook();
+    updateStatus();
+    setMode(state.mode, { force: true, toast: false });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+</script>
+</body>
+</html>

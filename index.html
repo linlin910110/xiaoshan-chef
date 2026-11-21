@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>小膳 · 每日健康菜谱</title>
+<meta name="description" content="AI 营养师兼厨师，帮你搭配每天的均衡菜单，支持搜索和对话选菜。" />
+<link rel="stylesheet" href="styles.css" />
+<!-- file-gate:start —— 单文件版会把这一段删掉（那里不需要跳转） -->
+<script>
+/* 双击打开的 file:// 页面不当作应用使用：探测本地服务，起来后自动跳过去，
+   这样「双击 index.html」和「http://127.0.0.1:8137/」永远显示同一个界面、同一份数据。 */
+(function () {
+  if (location.protocol !== 'file:') return;
+  var SERVER = 'http://127.0.0.1:8137/';
+  var gate = null;
+  var status = null;
+  var tries = 0;
+  var btnStyle = 'display:inline-block;padding:10px 18px;border-radius:10px;font-size:14px;text-decoration:none;cursor:pointer;border:1px solid #d9d2c4;background:#fff;color:#3a352d;font-family:inherit';
+
+  function build() {
+    if (gate) return;
+    gate = document.createElement('div');
+    gate.id = 'fileGate';
+    gate.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;' +
+      'background:#f6f3ec;padding:24px;color:#2c2a26;font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif';
+    gate.innerHTML =
+      '<div style="max-width:580px;width:100%;background:#fff;border:1px solid #e7e1d5;border-radius:18px;padding:32px 30px;box-shadow:0 18px 50px rgba(60,50,30,.12)">' +
+        '<div style="font-size:13px;letter-spacing:.12em;color:#9a9186">小膳 / 老灶</div>' +
+        '<h2 style="margin:10px 0 8px;font-size:23px;line-height:1.35">请从本地服务打开，这里会自动跳转</h2>' +
+        '<p style="margin:0 0 12px;line-height:1.75;color:#5b554c">你现在是<b>双击 index.html</b> 打开的（<code>file://</code>）。浏览器把它和 <code>http://127.0.0.1:8137/</code> 当成两个站点，API Key、模式、菜单各存一份，所以看起来像两个应用。</p>' +
+        '<p style="margin:0 0 16px;line-height:1.75;color:#5b554c">正在寻找本地服务，找到后自动跳过去，不用记地址。</p>' +
+        '<div id="gateStatus" style="font-size:14px;color:#8a7f6d;margin-bottom:18px">⏳ 正在检测 http://127.0.0.1:8137/ …</div>' +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+          '<a href="' + SERVER + '" style="' + btnStyle + ';background:#2f7d4f;border-color:#2f7d4f;color:#fff;font-weight:600">直接打开服务版</a>' +
+          '<button type="button" id="gateRetry" style="' + btnStyle + '">重新检测</button>' +
+        '</div>' +
+        '<p style="margin:18px 0 0;font-size:13px;line-height:1.7;color:#9a9186">一直检测不到？双击同目录的 <b>start.cmd</b> 启动本地服务（那个黑窗口别关）。它起来以后，这个页面会在 3 秒内自动跳转。</p>' +
+      '</div>';
+    document.body.appendChild(gate);
+    status = document.getElementById('gateStatus');
+    document.getElementById('gateRetry').addEventListener('click', probe);
+  }
+
+  function probe() {
+    if (status) status.textContent = '⏳ 正在检测 http://127.0.0.1:8137/ …';
+    var img = new Image();
+    img.onload = function () { location.replace(SERVER); };
+    img.onerror = function () {
+      tries++;
+      if (status) {
+        status.textContent = '✗ 还没检测到本地服务（第 ' + tries + ' 次）。启动后会自动跳转，也可以点「重新检测」。';
+      }
+    };
+    img.src = SERVER + '__ping.png?_=' + Date.now();
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    build();
+    probe();
+    setInterval(probe, 3000);
+  });
+})();
+</script>
+<!-- file-gate:end -->
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 48 48" width="30" height="30" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 30h28a14 14 0 0 1-28 0Z" />
+        <path d="M24 30V16M24 16c0-4 3-7 7-7 0 4-3 7-7 7ZM24 16c0-4-3-7-7-7 0 4 3 7 7 7Z" />
+      </svg>
+    </div>
+    <div class="brand-text">
+      <h1>小膳</h1>
+      <p id="brandSub">每日健康菜谱 · 营养师 × 厨师</p>
+    </div>
+  </div>
+
+  <div class="mode-switch" id="modeSwitch" role="group" aria-label="切换模式">
+    <button type="button" class="mode-btn is-active" data-mode="health">健康模式</button>
+    <button type="button" class="mode-btn" data-mode="home">家常模式</button>
+  </div>
+
+  <div class="topbar-actions">
+    <button class="pill" id="connPill" type="button" title="点击打开 API 设置">
+      <span class="dot" id="connDot"></span>
+      <span id="connText">未连接</span>
+    </button>
+    <button class="btn ghost" id="btnOpenSettings" type="button">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+      API 设置
+    </button>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="main-col" aria-label="菜谱">
+
+    <form class="searchbar" id="searchForm" autocomplete="off">
+      <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="searchInput" type="search" placeholder="想吃什么？例如：高蛋白低脂的鸡胸肉、15 分钟快手菜、控糖晚餐" />
+      <button class="btn primary" type="submit" id="btnSearch">搜索菜谱</button>
+    </form>
+
+    <div class="chips" id="chipsHealth" role="group" aria-label="快捷筛选">
+      <button type="button" class="chip" data-q="低卡减脂，每顿 500 大卡以内">低卡减脂</button>
+      <button type="button" class="chip" data-q="高蛋白">高蛋白</button>
+      <button type="button" class="chip" data-q="纯素、蛋奶素都能吃的素菜">素食</button>
+      <button type="button" class="chip" data-q="20 分钟内能做完的快手菜">快手</button>
+      <button type="button" class="chip" data-q="控糖、低 GI 的主食和菜">控糖</button>
+      <button type="button" class="chip" data-q="适合带饭、微波加热也好吃的便当菜">带饭</button>
+      <button type="button" class="chip chip-accent" id="btnMenu" data-action="menu">✨ 生成今日菜单</button>
+    </div>
+
+    <div class="chips" id="chipsHome" role="group" aria-label="按菜系浏览" hidden>
+      <button type="button" class="chip" data-cuisine="川菜">川菜</button>
+      <button type="button" class="chip" data-cuisine="粤菜">粤菜</button>
+      <button type="button" class="chip" data-cuisine="鲁菜">鲁菜</button>
+      <button type="button" class="chip" data-cuisine="苏菜">苏菜</button>
+      <button type="button" class="chip" data-cuisine="湘菜">湘菜</button>
+      <button type="button" class="chip" data-cuisine="浙菜">浙菜</button>
+      <button type="button" class="chip" data-cuisine="闽菜">闽菜</button>
+      <button type="button" class="chip" data-cuisine="徽菜">徽菜</button>
+      <button type="button" class="chip" data-cuisine="东北菜">东北菜</button>
+      <button type="button" class="chip" data-cuisine="西北菜">西北菜</button>
+      <button type="button" class="chip" data-cuisine="云贵菜">云贵菜</button>
+      <button type="button" class="chip" data-cuisine="港式家常">港式</button>
+      <button type="button" class="chip chip-accent" id="btnDish" data-action="dish">🎲 随便来一道</button>
+    </div>
+
+    <div class="board" id="board" aria-live="polite">
+      <div class="board-empty" id="emptyHealth">
+        <div class="empty-emoji" aria-hidden="true">🥗</div>
+        <h2>今天吃点什么？</h2>
+        <p>让「小膳」帮你配一份今日菜单，或者直接搜索你手边的食材。</p>
+        <div class="empty-actions">
+          <button class="btn primary" type="button" data-action="menu">生成今日菜单</button>
+          <button class="btn ghost" type="button" data-q="冰箱里有鸡蛋、西红柿、西兰花、鸡胸肉">我有这些食材</button>
+        </div>
+      </div>
+
+      <div class="board-empty" id="emptyHome" hidden>
+        <div class="empty-emoji" aria-hidden="true">🍳</div>
+        <h2>今天想做道什么菜？</h2>
+        <p>让「老灶」按菜系教你一道地道家常菜：火候、下锅顺序、最容易翻车的那一步，都写清楚。</p>
+        <div class="empty-actions">
+          <button class="btn primary" type="button" data-action="dish">随便来一道</button>
+          <button class="btn ghost" type="button" data-cuisine="川菜">先看看川菜</button>
+        </div>
+      </div>
+
+      <div id="cardsHost"></div>
+    </div>
+  </section>
+
+  <aside class="side" aria-label="侧栏">
+    <div id="sideHealth">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>今日已选 <span class="count" id="menuCount">0</span></h2>
+          <button class="link-btn" id="btnClearMenu" type="button">清空</button>
+        </div>
+        <ul class="menu-list" id="menuList"></ul>
+        <p class="menu-empty" id="menuEmpty">点菜谱卡片上的「加入今日菜单」，这里会帮你算总热量和蛋白质。</p>
+        <div class="totals" id="menuTotals" hidden></div>
+      </div>
+
+      <div class="panel panel-tips">
+        <div class="panel-head"><h2>小膳的搭配口诀</h2></div>
+        <ul class="tips">
+          <li><strong>一拳头主食</strong>：优先杂粮饭、玉米、红薯。</li>
+          <li><strong>一掌心蛋白</strong>：鱼虾、鸡胸、蛋、豆腐轮着来。</li>
+          <li><strong>两拳头蔬菜</strong>：深色菜占一半。</li>
+          <li><strong>少油三件套</strong>：蒸、煮、快炒，出锅再放盐。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="sideHome" hidden>
+      <div class="panel">
+        <div class="panel-head">
+          <h2>我的菜谱本 <span class="count" id="bookCount">0</span></h2>
+          <button class="link-btn" id="btnClearBook" type="button">清空</button>
+        </div>
+        <ul class="menu-list" id="bookList"></ul>
+        <p class="menu-empty" id="bookEmpty">看到想学的菜，点「收进菜谱本」，这里会按菜系归好，方便下次照着做。</p>
+        <div class="totals" id="bookSummary" hidden></div>
+      </div>
+
+      <div class="panel panel-tips">
+        <div class="panel-head"><h2>老灶的基本功</h2></div>
+        <ul class="tips">
+          <li><strong>热锅凉油</strong>：锅烧到冒青烟再下油，炒肉不粘。</li>
+          <li><strong>焯水去腥</strong>：冷水下锅，血沫才逼得出来。</li>
+          <li><strong>糖色别贪</strong>：冰糖化开变枣红就下料，一秒就苦。</li>
+          <li><strong>勾芡分两次</strong>：汤汁挂勺即停，回锅会糊。</li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<section class="chat" aria-label="和小膳对话">
+  <div class="chat-head">
+    <h2>和小膳聊聊</h2>
+    <p id="chatHint">比如「午餐想吃鱼」「换一道更简单的早餐」「帮我改造成带饭版」</p>
+  </div>
+  <div class="chat-log" id="chatLog" aria-live="polite"></div>
+  <form class="chat-form" id="chatForm" autocomplete="off">
+    <input id="chatInput" type="text" placeholder="说说你的口味、预算、手边食材……" />
+    <button class="btn primary" type="submit" id="btnChatSend">发送</button>
+  </form>
+</section>
+
+<footer class="foot">
+  <span>由 Agnes 2.5 驱动 · Key 仅保存在本机浏览器，直接请求 api.agnes-ai.cn</span>
+  <span class="foot-warn">营养建议仅供参考，不能替代医生或注册营养师的个体化诊疗。</span>
+</footer>
+
+<dialog id="settingsDialog" class="dialog">
+  <form method="dialog" class="dialog-inner" id="settingsForm">
+    <div class="dialog-head">
+      <h2>API 设置</h2>
+      <button class="icon-btn" value="cancel" type="submit" aria-label="关闭">×</button>
+    </div>
+
+    <label class="field">
+      <span class="label">Agnes API Key</span>
+      <div class="key-row">
+        <input id="keyInput" type="password" placeholder="sk-..." spellcheck="false" autocomplete="off" />
+        <button type="button" class="btn ghost small" id="keyToggle">显示</button>
+      </div>
+      <small class="hint">在 <a href="https://platform.agnes-ai.cn" target="_blank" rel="noreferrer">platform.agnes-ai.cn</a> 生成。只存在你自己的浏览器里；健康模式和家常模式共用这一个 Key。</small>
+    </label>
+
+    <label class="field">
+      <span class="label">模型</span>
+      <select id="modelSelect">
+        <option value="agnes-2.5-flash">Agnes 2.5 Flash · 快而免费</option>
+        <option value="agnes-3.0-flash">Agnes 3.0 Flash · 新一代免费</option>
+        <option value="agnes-2.5-pro">Agnes 2.5 Pro · 按量计费</option>
+      </select>
+    </label>
+
+    <div class="field-row" id="healthOnlyFields">
+      <label class="field">
+        <span class="label">每日目标</span>
+        <select id="goalSelect">
+          <option value="均衡维持，每天 1800 大卡左右">均衡维持（1800 kcal）</option>
+          <option value="减脂，每天 1500–1600 大卡，晚餐清淡">减脂（1500 kcal）</option>
+          <option value="增肌，每天 2200 大卡，蛋白质充足">增肌（2200 kcal）</option>
+          <option value="控糖，低 GI、少精制碳水">控糖（低 GI）</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="label">忌口 / 不吃</span>
+        <input id="avoidInput" type="text" placeholder="例：香菜、乳糖不耐" />
+      </label>
+    </div>
+
+    <div class="test-row">
+      <button type="button" class="btn ghost" id="btnTest">测试连通</button>
+      <span class="test-result" id="testResult" role="status">还没测试</span>
+    </div>
+
+    <div class="dialog-foot">
+      <button type="button" class="link-btn danger" id="btnClearKey">清除本机 Key</button>
+      <button type="submit" class="btn primary" id="btnSaveSettings" value="save">保存</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="core.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
