@@ -9,6 +9,8 @@
 
 两个模式的板面内容、对话历史各自独立保存，切回来还是原样；Key、模型、目标、忌口是共用的。
 
+**在线试用**：<https://linlin910110.github.io/xiaoshan-chef/> —— 打开后填自己的 Agnes API Key 即可，Key 只存在你自己浏览器里，不会上传。
+
 ![健康模式：一日菜单](shots/shot-menu.png)
 
 | 家常模式：菜系 + 关键一步 | 搜索选菜 |
